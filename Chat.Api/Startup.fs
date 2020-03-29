@@ -38,8 +38,11 @@ type Startup private () =
 
         app.UseWebSockets() |> ignore
 
-        app.UseAuthorization() |> ignore
+        app.UseDefaultFiles() |>ignore
+        app.UseStaticFiles()|>ignore
 
+        app.UseAuthorization() |> ignore
+        app.UseRequestLocalization()|>ignore
         app.UseEndpoints(fun endpoints ->
             endpoints.MapControllers() |> ignore
             ) |> ignore

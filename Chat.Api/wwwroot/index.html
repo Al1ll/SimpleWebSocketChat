@@ -1,0 +1,158 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+    <style>
+        table { border: 0 }
+        .commslog-data { font-family: Consolas, Courier New, Courier, monospace; }
+        .commslog-server { background-color: red; color: white }
+        .commslog-client { background-color: green; color: white }
+    </style>
+</head>
+<body>
+    <h1>WebSocket Sample Chat</h1>
+    <p id="stateLabel">Ready to connect...</p>
+    <div>
+        <label for="nickId">Nickname:</label>
+        <input id="nickId" />
+        <label for="roomId">Room id:</label>
+        <input id="roomId" />
+        <button id="requestBtn" type="button">Login</button>
+    </div>
+    <p></p>
+    <div>
+        <label for="sendMessage">Message to send:</label>
+        <input id="sendMessage" disabled />
+        <button id="sendButton" type="submit" disabled>Send</button>
+        <button id="closeButton" disabled>Close Socket</button>
+    </div>
+
+    <h2>Messages:</h2>
+    <table style="width: 800px">
+        <tbody id="commsLog">
+        </tbody>
+    </table>
+
+    <script>
+        var stateLabel = document.getElementById("stateLabel");
+        var sendMessage = document.getElementById("sendMessage");
+        var sendButton = document.getElementById("sendButton");
+        var commsLog = document.getElementById("commsLog");
+        var closeButton = document.getElementById("closeButton");
+
+        var nick = document.getElementById("nickId")
+        var room = document.getElementById("roomId")
+        var requestBtn = document.getElementById("requestBtn")
+
+        var socket;
+
+        function connectToWs(url) {
+            stateLabel.innerHTML = "Connecting";
+            socket = new WebSocket(url);
+            socket.onopen = function (event) {
+                updateState();
+                commsLog.innerHTML += '<tr>' +
+                    '<td colspan="3" class="commslog-data">Connection opened</td>' +
+                    '</tr>';
+            };
+            socket.onclose = function (event) {
+                updateState();
+                commsLog.innerHTML += '<tr>' +
+                    '<td colspan="3" class="commslog-data">Connection closed. Code: ' + htmlEscape(event.code) + '. Reason: ' + htmlEscape(event.reason) + '</td>' +
+                    '</tr>';
+            };
+            socket.onerror = updateState;
+            socket.onmessage = function (event) {
+                commsLog.innerHTML += '<td class="commslog-data">' + htmlEscape(event.data) + '</td>';
+            };
+        };
+
+        function disable() {
+            sendMessage.disabled = true;
+            sendButton.disabled = true;
+            closeButton.disabled = true;
+
+            nick.disabled = false;
+            room.disabled = false;
+            requestBtn.disabled = false;
+        }
+        function enable() {
+            sendMessage.disabled = false;
+            sendButton.disabled = false;
+            closeButton.disabled = false;
+
+            nick.disabled = true;
+            room.disabled = true;
+            requestBtn.disabled = true;
+        }
+
+        function updateState() {
+            if (!socket) {
+                disable();
+            } else {
+                switch (socket.readyState) {
+                    case WebSocket.CLOSED:
+                        stateLabel.innerHTML = "Closed";
+                        disable();
+                        connectionUrl.disabled = false;
+                        connectButton.disabled = false;
+                        break;
+                    case WebSocket.CLOSING:
+                        stateLabel.innerHTML = "Closing...";
+                        disable();
+                        break;
+                    case WebSocket.CONNECTING:
+                        stateLabel.innerHTML = "Connecting...";
+                        disable();
+                        break;
+                    case WebSocket.OPEN:
+                        stateLabel.innerHTML = "Open";
+                        enable();
+                        break;
+                    default:
+                        stateLabel.innerHTML = "Unknown WebSocket State: " + htmlEscape(socket.readyState);
+                        disable();
+                        break;
+                }
+            }
+        }
+
+        requestBtn.addEventListener("click", function () {
+            enable()
+            var data = new FormData();
+            data.append("nickname", nick.value)
+            data.append("roomId", room.value)
+            fetch("/api/user/login?nickname=" + nick.value + "&roomId=" + room.value, { method: "POST" })
+                .then(response => response.text())
+                .then(value => {
+                    connectToWs(value.trim())
+                })
+        })
+
+        closeButton.onclick = function () {
+            if (!socket || socket.readyState !== WebSocket.OPEN) {
+                alert("socket not connected");
+            }
+            socket.close(1000, "Closing from client");
+        };
+
+        sendButton.onclick = function () {
+            if (!socket || socket.readyState !== WebSocket.OPEN) {
+                alert("socket not connected");
+            }
+            var data = sendMessage.value;
+            socket.send(data);
+        };
+
+        function htmlEscape(str) {
+            return str.toString()
+                .replace(/&/g, '&amp;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+        }
+    </script>
+</body>
+</html>

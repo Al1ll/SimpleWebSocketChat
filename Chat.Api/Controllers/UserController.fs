@@ -30,7 +30,6 @@ type UserController()=
     
 
   [<HttpPost>]
-  [<Route("{nickname}/{roomId}")>]
   member this.Login(nickname:string, roomId:int):Async<IActionResult>= async {
     if (not<|String.IsNullOrEmpty nickname) && roomId>=0 then
       do! Storage.Storage.Event.addOneEvent(sprintf "login: %s in room %i" nickname roomId)

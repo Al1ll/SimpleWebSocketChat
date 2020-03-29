@@ -17,6 +17,8 @@
     <Compile Include="Program.fs" />
   </ItemGroup>
 
+  <ItemGroup />
+
   <ItemGroup>
     <None Include="Dockerfile" />
   </ItemGroup>
