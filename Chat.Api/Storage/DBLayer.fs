@@ -43,5 +43,5 @@ module DbLayer =
   let getConnectionAsync () =
     dbCache.PostAndAsyncReply(fun ch -> GetConnection ch)
 
-  let setPath = Msg.SetDb >> dbCache.Post
+  let setDb = Msg.SetDb >> dbCache.Post
 
