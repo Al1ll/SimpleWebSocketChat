@@ -14,36 +14,44 @@ open Chat
 type UserController()=
   inherit ControllerBase()
 
-  [<HttpGet>]
-  [<Route("{nickname}")>]
+  [<HttpPost>]
+  [<Route("")>]
   member this.Register(nickname:string) = async {
-    match! Storage.Storage.Users.isExists nickname with
-    | true -> return "this nickname already exists"
-    | false -> 
-        do! Storage.Storage.Users.addUser nickname
-        return "Account created"
+    if not<|(String.IsNullOrEmpty nickname) then
+      match! Storage.Storage.Users.isExists nickname with
+      | true -> return "this nickname already exists"
+      | false -> 
+          do! Storage.Storage.Users.addUser nickname
+          return "Account created"
+    else
+      return "Error"
   }
     
-  [<HttpGet>]
-  [<Route("{nickname}/{roomId}")>]
-  member this.Login(nickname:string, roomId:int)=
-    let channelId=
-      match Chat.Global.rooms.ContainsKey roomId with
-      | true -> 
-          Chat.Global.channels
-          |> Seq.pick(fun p -> if p.Value=roomId then Some p.Key else None)
-      | false ->
-          Chat.Global.rooms.TryAdd(roomId, new Chat.Api.Models.ChatMessengeHandler())|>ignore
-          Guid.NewGuid().ToString("N")
+  //[<HttpGet>]
+  //[<Route("{nickname}/{roomId}")>]
+  [<HttpPost>]
+  [<Route("")>]
+  member this.Login(nickname:string, sessionId:int)=
+    if (not<|String.IsNullOrEmpty nickname) && sessionId>=0 then
+      let channelId=
+          match Chat.Global.rooms.ContainsKey sessionId with
+          | true -> 
+              Chat.Global.channels
+              |> Seq.pick(fun p -> if p.Value=sessionId then Some p.Key else None)
+          | false ->
+              Chat.Global.rooms.TryAdd(sessionId, new Chat.Api.Models.ChatMessengeHandler())|>ignore
+              Guid.NewGuid().ToString("N")
 
-    Chat.Global.channels.TryAdd(channelId, roomId)|>ignore
-    let port = 
-      match this.Request.Host.Port.HasValue with
-      | true -> sprintf ":%i" this.Request.Host.Port.Value
-      | false -> String.Empty
+      Chat.Global.channels.TryAdd(channelId, sessionId)|>ignore
+      let port = 
+        match this.Request.Host.Port.HasValue with
+        | true -> sprintf ":%i" this.Request.Host.Port.Value
+        | false -> String.Empty
 
-    let url = sprintf "ws://%s%s/ws/%s" this.Request.Host.Host port channelId
-    JsonResult(url)
+      let url = sprintf "ws://%s%s/ws/%s" this.Request.Host.Host port channelId
+      JsonResult(url)
+    else
+      JsonResult("Please set nickname and roomId>=0")
 
   [<HttpGet>]
   member this.UserAll()= async {
