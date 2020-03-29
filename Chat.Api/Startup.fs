@@ -23,10 +23,11 @@ type Startup private () =
     member this.ConfigureServices(services: IServiceCollection) =
         // Add framework services.
         services.AddControllers() |> ignore
-
-        services.AddClickHouse()
-
+        services.AddDistributedMemoryCache()|> ignore
+        //services.AddClickHouse()
+        
         Chat.Storage.DbLayer.setDb "chatdb"
+        Chat.Storage.DbLayerEvents.setDb "chatdbEvets"
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
     member this.Configure(app: IApplicationBuilder, env: IWebHostEnvironment) =

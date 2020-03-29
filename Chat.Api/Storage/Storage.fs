@@ -7,20 +7,12 @@ module Storage =
   open MongoDB.Bson
   open MongoDB
 
-  //let createCommandAsync query =
-  //    async {
-  //      let! connection = DbLayer.getConnectionAsync()
-  //      return new SqliteCommand(query, connection)
-  //    }
-
   let insertRecord (table:string) (record: 'T)= 
     async {
       let! db = DbLayer.getConnectionAsync()
       let collection = db.GetCollection<'T>(table)
       collection.InsertOne(record)
     }
-
-  //let insertRecord
   
   [<RequireQualifiedAccess>]
   module Users=
@@ -72,6 +64,27 @@ module Storage =
       do! insertRecord table record
     }
 
+  [<RequireQualifiedAccess>]//Временно будет события записывать в отдельную базу MongoDB
+  module Event =
+    let table = "Events"
+    type Event={
+      Id:System.Guid;
+      Text: string;
+    }
+    let addOneEvent (text:string)= 
+      async {
+        let! db = DbLayerEvents.getConnectionAsync()
+        let collection = db.GetCollection<Event>(table)
+        let record = {Id=System.Guid.NewGuid(); Text=text}
+        collection.InsertOne(record)
+      }
+
+    let getAllEvents() = 
+      async {
+        let! db = DbLayerEvents.getConnectionAsync()
+        let collection = db.GetCollection<Event>(table)
+        return collection.Find(fun _->true).ToList()
+      }
 
   
 

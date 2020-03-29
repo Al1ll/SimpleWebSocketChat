@@ -5,7 +5,7 @@ open System.Net.WebSockets
 open System.Text
 open System
 open System.Threading
-
+open Chat.Storage
 type ChatMessengeHandler()=
   let sockets = new ConcurrentDictionary<string, WebSocket>()  
 
@@ -26,12 +26,14 @@ type ChatMessengeHandler()=
 
   member this.OnConnected(nickname:string) (ws:WebSocket)=
     sockets.TryAdd(nickname,ws)|>ignore
+    //do! Storage.Event.addOneEvent(sprintf "%s on connected" nickname)
     this.SendMessageToAll(sprintf "%s is connected" nickname)
 
   member this.OnDisconnet(nickname:string)= async {
     let _,ws = sockets.TryRemove nickname
     do! ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "Close", CancellationToken.None)|>Async.AwaitTask
     do! this.SendMessageToAll (sprintf "%s is disconnected" nickname)
+    do! Storage.Event.addOneEvent(sprintf "%s is disconnected" nickname)
   }
 
   member this.IsEmpty()= sockets.IsEmpty

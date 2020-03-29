@@ -6,10 +6,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="Models\ChatMessengeHandler.fs" />
-    <Compile Include="Models\Global.fs" />
     <Compile Include="Storage\DBLayer.fs" />
     <Compile Include="Storage\Storage.fs" />
+    <Compile Include="Models\ChatMessengeHandler.fs" />
+    <Compile Include="Models\Global.fs" />
+    <Compile Include="Controllers\EventsController.fs" />
     <Compile Include="Controllers\ChannelController.fs" />
     <Compile Include="Controllers\UserController.fs" />
     <Compile Include="Startup.fs" />
