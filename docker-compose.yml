@@ -6,6 +6,8 @@ services:
     build:
       context: .
       dockerfile: Chat.Api/Dockerfile
+    links:
+      - mongo
 
   mongo:
     image: mongo
@@ -13,7 +15,7 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: 123456
-        ports:
+    ports:
       - 27017:27017
 
   mongo-express:

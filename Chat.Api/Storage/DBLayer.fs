@@ -25,7 +25,7 @@ module DbLayer =
          | None -> //mongodb://{User}:{Password}@{Host}:{Port}
                    //mongodb://localhost:27017/?readPreference=primary&appname=MongoDB%20Compass%20Community&ssl=false
                    //mongodb://{User}:{Password}@{Host}:{Port}
-                   let client =new MongoClient()//mongodb://root:123456@localhost:27017
+                   let client =new MongoClient("mongodb://root:123456@192.168.99.100:27017")//mongodb://root:123456@192.168.99.100:27017
                    let conn =  client.GetDatabase(db)
 
                    ch.Reply conn
