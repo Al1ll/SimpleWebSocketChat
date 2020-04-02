@@ -10,6 +10,7 @@ type EventsController()=
 
   [<HttpGet>]
   member this.All()= async {
-    let! res = Storage.Storage.Event.getAllEvents()
-    return this.Ok(res)
+    //let! res = Storage.Storage.Event.getAllEvents()
+    //return this.Ok(res)
+    return this.Ok()
   }

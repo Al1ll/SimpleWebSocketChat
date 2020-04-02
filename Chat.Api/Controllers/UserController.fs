@@ -16,8 +16,7 @@ type UserController()=
   inherit ControllerBase()
 
   [<HttpPost>]
-  member this.Register(nickname:string):Async<IActionResult> = async {
-    let nick = this.HttpContext.Session.GetString("1")
+  member this.Register nickname = async {
     if not<|(String.IsNullOrEmpty nickname) then
         match! Storage.Storage.Users.isExists nickname with
         | true -> return (this.BadRequest("this nickname already exists"):>IActionResult)
@@ -30,9 +29,9 @@ type UserController()=
     
 
   [<HttpPost>]
-  member this.Login(nickname:string, roomId:int):Async<IActionResult>= async {
+  member this.Login nickname roomId= async {
     if (not<|String.IsNullOrEmpty nickname) && roomId>=0 then
-      do! Storage.Storage.Event.addOneEvent(sprintf "login: %s in room %i" nickname roomId)
+      //do! Storage.Storage.Event.addOneEvent(sprintf "login: %s in room %i" nickname roomId)
       match! Storage.Storage.Users.isExists nickname with
       | true ->
         let channelId=
@@ -44,7 +43,7 @@ type UserController()=
                 Chat.Global.rooms.TryAdd(roomId, new Chat.Api.Models.ChatMessengeHandler())|>ignore
                 Guid.NewGuid().ToString("N")
 
-        do! Storage.Storage.Event.addOneEvent(sprintf "return sessionId: %s for %s in room %i" channelId nickname roomId)
+        //do! Storage.Storage.Event.addOneEvent(sprintf "return sessionId: %s for %s in room %i" channelId nickname roomId)
 
         Chat.Global.channels.TryAdd(channelId, roomId)|>ignore
         let port = 
@@ -58,7 +57,7 @@ type UserController()=
         return (this.Ok(url):> IActionResult)
       | false -> return (this.NotFound("User is not registered"):> IActionResult)
     else
-      do! Storage.Storage.Event.addOneEvent(sprintf "some parameters are missing Nickname:%s roomId:%i" nickname roomId)
+      //do! Storage.Storage.Event.addOneEvent(sprintf "some parameters are missing Nickname:%s roomId:%i" nickname roomId)
       return (this.BadRequest("Please set nickname and roomId>=0"):> IActionResult)
   }
 

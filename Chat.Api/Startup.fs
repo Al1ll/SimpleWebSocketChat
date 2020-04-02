@@ -27,7 +27,7 @@ type Startup private () =
         //services.AddClickHouse()
         
         Chat.Storage.DbLayer.setDb "chatdb"
-        Chat.Storage.DbLayerEvents.setDb "chatdbEvets"
+        //Chat.Storage.DbLayerEvents.setDb "chatdbEvets"
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
     member this.Configure(app: IApplicationBuilder, env: IWebHostEnvironment) =

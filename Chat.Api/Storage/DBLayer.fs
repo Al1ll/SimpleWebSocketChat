@@ -22,8 +22,10 @@ module DbLayer =
            ch.Reply x
            return! loop (db,conn)
 
-         | None ->
-                   let client =new MongoClient()
+         | None -> //mongodb://{User}:{Password}@{Host}:{Port}
+                   //mongodb://localhost:27017/?readPreference=primary&appname=MongoDB%20Compass%20Community&ssl=false
+                   //mongodb://{User}:{Password}@{Host}:{Port}
+                   let client =new MongoClient()//mongodb://root:123456@localhost:27017
                    let conn =  client.GetDatabase(db)
 
                    ch.Reply conn
@@ -39,41 +41,40 @@ module DbLayer =
   let setDb = Msg.SetDb >> dbCache.Post
 
 
-[<RequireQualifiedAccess>]
-module DbLayerEvents =
-  open System.IO
-  open MongoDB.Driver
+//[<RequireQualifiedAccess>]
+//module DbLayerEvents =
+//  open MongoDB.Driver
 
-  type private Msg=
-    | SetDb of string
-    | GetConnection of AsyncReplyChannel<IMongoDatabase>
+//  type private Msg=
+//    | SetDb of string
+//    | GetConnection of AsyncReplyChannel<IMongoDatabase>
 
-  let private dbCache = MailboxProcessor.Start(fun inbox->
-    let rec loop (db,conn:IMongoDatabase option) =  async {
-      match! inbox.Receive() with
+//  let private dbCache = MailboxProcessor.Start(fun inbox->
+//    let rec loop (db,conn:IMongoDatabase option) =  async {
+//      match! inbox.Receive() with
 
-      | SetDb newdb ->
-        return! loop (newdb,conn)
+//      | SetDb newdb ->
+//        return! loop (newdb,conn)
 
-      | GetConnection ch ->
-         match conn with
-         | Some x->
-           ch.Reply x
-           return! loop (db,conn)
+//      | GetConnection ch ->
+//         match conn with
+//         | Some x->
+//           ch.Reply x
+//           return! loop (db,conn)
 
-         | None ->
-                   let client =new MongoClient()
-                   let conn =  client.GetDatabase(db)
+//         | None ->
+//                   let client =new MongoClient("mongodb://localhost:27017")
+//                   let conn =  client.GetDatabase(db)
 
-                   ch.Reply conn
-                   return! loop (db,Some conn)
+//                   ch.Reply conn
+//                   return! loop (db,Some conn)
                    
-      return! loop (db,None)
-    }
-    loop ("db",None))
+//      return! loop (db,None)
+//    }
+//    loop ("db",None))
 
-  let getConnectionAsync () =
-    dbCache.PostAndAsyncReply(fun ch -> GetConnection ch)
+//  let getConnectionAsync () =
+//    dbCache.PostAndAsyncReply(fun ch -> GetConnection ch)
 
-  let setDb = Msg.SetDb >> dbCache.Post
+//  let setDb = Msg.SetDb >> dbCache.Post
 

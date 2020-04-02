@@ -1,1 +1,2 @@
-docker build -f "C:\Users\Ism\source\repos\Chat\Chat.Api\Dockerfile" -t kkkkjjjj/chatapi .
+docker build -f "./Chat.Api/Dockerfile" -t kkkkjjjj/simplechatapi .
+docker run kkkkjjjj/simplechatapi

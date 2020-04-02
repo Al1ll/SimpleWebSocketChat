@@ -34,9 +34,9 @@ type ChatMessengeHandler()=
       let _,ws = sockets.TryRemove nickname
       do! ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "Close", CancellationToken.None)|>Async.AwaitTask
       do! this.SendMessageToAll (sprintf "%s is disconnected" nickname)
-      do! Storage.Event.addOneEvent(sprintf "%s is disconnected" nickname)
-    with ex->
-      do! Storage.Event.addOneEvent(sprintf "Error: %A" ex)
+      //do! Storage.Event.addOneEvent(sprintf "%s is disconnected" nickname)
+    with ex->()
+      //do! Storage.Event.addOneEvent(sprintf "Error: %A" ex)
   }
 
   member this.IsEmpty()= sockets.IsEmpty
