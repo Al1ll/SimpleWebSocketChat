@@ -18,21 +18,22 @@ type UserController()=
   [<HttpPost>]
   member this.Register nickname = async {
     if not<|(String.IsNullOrEmpty nickname) then
-        match! Storage.Storage.Users.isExists nickname with
-        | true -> return (this.BadRequest("this nickname already exists"):>IActionResult)
-        | false -> 
-            do! Storage.Storage.Users.addUser nickname
-            return (this.Ok("Account created"):>IActionResult)
+      Storage.Event.addEvent(sprintf "try register - nickname: %s" nickname)
+      match! Storage.Users.isExists nickname with
+      | true -> return (this.BadRequest("this nickname already exists"):>IActionResult)
+      | false -> 
+         do! Storage.Users.addUser nickname
+         Storage.Event.addEvent(sprintf "%s is registered" nickname)
+         return (this.Ok("Account created"):>IActionResult)
     else
       return (this.BadRequest():>IActionResult)
   }
-    
 
   [<HttpPost>]
   member this.Login nickname roomId= async {
     if (not<|String.IsNullOrEmpty nickname) && roomId>=0 then
-      //do! Storage.Storage.Event.addOneEvent(sprintf "login: %s in room %i" nickname roomId)
-      match! Storage.Storage.Users.isExists nickname with
+      Storage.Event.addEvent(sprintf "try login: %s in room %i" nickname roomId)
+      match! Storage.Users.isExists nickname with
       | true ->
         let channelId=
             match Chat.Global.rooms.ContainsKey roomId with
@@ -42,8 +43,7 @@ type UserController()=
             | false ->
                 Chat.Global.rooms.TryAdd(roomId, new Chat.Api.Models.ChatMessengeHandler())|>ignore
                 Guid.NewGuid().ToString("N")
-
-        //do! Storage.Storage.Event.addOneEvent(sprintf "return sessionId: %s for %s in room %i" channelId nickname roomId)
+        Storage.Event.addEvent (sprintf "%s is logined in room %i" nickname roomId)
 
         Chat.Global.channels.TryAdd(channelId, roomId)|>ignore
         let port = 
@@ -52,17 +52,19 @@ type UserController()=
           | false -> String.Empty
 
         //let url = sprintf "ws://%s%s/ws/%s" this.Request.Host.Host port channelId
-        //Session.Set Get не работают потому что я не могу извлечь данные в ChannelControlle т.к. там используется вебсокет
+        //Session.Set Get не работают потому что я не могу извлечь данные в ChannelController т.к. там используется вебсокет
         let url = sprintf "ws://%s%s/%s/ws/%s" this.Request.Host.Host port nickname channelId
+        Storage.Event.addEvent (sprintf "return sessionId: %s for %s in room %i" channelId nickname roomId)
         return (this.Ok(url):> IActionResult)
       | false -> return (this.NotFound("User is not registered"):> IActionResult)
     else
-      //do! Storage.Storage.Event.addOneEvent(sprintf "some parameters are missing Nickname:%s roomId:%i" nickname roomId)
+      Storage.Event.addEvent(sprintf "some parameters are missing Nickname:%s roomId:%i" nickname roomId)
       return (this.BadRequest("Please set nickname and roomId>=0"):> IActionResult)
   }
 
   [<HttpGet>]
   member this.All()= async {
-    let! res = Storage.Storage.Users.getAllUser()
+    Storage.Event.addEvent "call host://api/user/all"
+    let! res = Storage.Users.getAllUser()
     return this.Ok(res)
   }

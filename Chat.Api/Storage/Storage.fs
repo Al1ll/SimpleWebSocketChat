@@ -1,22 +1,26 @@
-﻿namespace Chat.Storage 
+﻿namespace Chat
 
 open MongoDB.Bson.Serialization.Attributes
 open MongoDB.Driver
+open ClickHouse.Ado
+open System.Data
+open Chat.Db
 
+[<RequireQualifiedAccess>]
 module Storage =
   open MongoDB.Bson
   open MongoDB
 
-  let insertRecord (table:string) (record: 'T)= 
+  let private insertRecord (table:string) (record: 'T)= 
     async {
-      let! db = DbLayer.getConnectionAsync()
+      let! db = DbLayer.MongoDB.getConnectionAsync()
       let collection = db.GetCollection<'T>(table)
       collection.InsertOne(record)
     }
   
   [<RequireQualifiedAccess>]
   module Users=
-    let table = "Users"
+    let private table = "Users"
     type User={
       Id:System.Guid;
       Name: string;
@@ -24,7 +28,7 @@ module Storage =
 
     let isExists(nick:string)=
       async {
-        let! db = DbLayer.getConnectionAsync()
+        let! db = DbLayer.MongoDB.getConnectionAsync()
         let collection = db.GetCollection<User>(table)
  
         return 
@@ -33,7 +37,7 @@ module Storage =
 
     let getRecordByName (nick:string) = 
       async {
-        let! db = DbLayer.getConnectionAsync()
+        let! db = DbLayer.MongoDB.getConnectionAsync()
         let collection = db.GetCollection<User>(table)
  
         return collection.Find(fun x -> x.Name=nick).ToList()
@@ -41,7 +45,7 @@ module Storage =
 
     let getAllUser() = 
       async {
-        let! db = DbLayer.getConnectionAsync()
+        let! db = DbLayer.MongoDB.getConnectionAsync()
         let collection = db.GetCollection<User>(table)
         return collection.Find(fun _->true).ToList()
       }
@@ -64,27 +68,43 @@ module Storage =
       do! insertRecord table record
     }
 
-  //[<RequireQualifiedAccess>]//Временно будет события записывать в отдельную базу MongoDB
-  //module Event =
-  //  let table = "Events"
-  //  type Event={
-  //    Id:System.Guid;
-  //    Text: string;
-  //  }
-  //  let addOneEvent (text:string)= 
-  //    async {
-  //      let! db = DbLayerEvents.getConnectionAsync()
-  //      let collection = db.GetCollection<Event>(table)
-  //      let record = {Id=System.Guid.NewGuid(); Text=text}
-  //      collection.InsertOne(record)
-  //    }
+  [<RequireQualifiedAccess>]
+  module Event =
+    let private table  =
+      "CREATE TABLE IF NOT EXISTS Events (timestamp DateTime, message String) ENGINE = StripeLog"
+      |> DbLayer.ClickHouseDB.tableQueries.Add
 
-  //  let getAllEvents() = 
-  //    async {
-  //      let! db = DbLayerEvents.getConnectionAsync()
-  //      let collection = db.GetCollection<Event>(table)
-  //      return collection.Find(fun _->true).ToList()
-  //    }
+    type Event ={
+      Timestamp:System.DateTime
+      Event: string
+    }
 
-  
+    let addEvent = DbLayer.ClickHouseDB.addEvent 
 
+    let inline private readOrdinal (reader:IDataReader) ord : 'a=
+      if (typeof<'a> = typeof<string>) then
+        reader.GetString ord |> unbox<'a>
+      else
+        reader.GetValue ord |> unbox<'a>
+
+    let inline read (reader:IDataReader)  name : 'a=
+        reader.GetOrdinal name |> readOrdinal reader
+
+    let inline readValues (f:IDataReader -> 'a) (reader:IDataReader)  =
+      [  
+        while reader.NextResult() do
+          while (reader.Read()) do yield f reader
+      ]
+
+    let getAllEvents() = 
+      async {
+        let read(reader: IDataReader) =
+          let time = read reader "timestamp"
+          let text = read reader "message"
+          {Timestamp=time; Event=text}
+
+        let! conn = DbLayer.ClickHouseDB.getConnectionAsync()
+        return
+          conn.CreateCommand("SELECT * FROM Events ORDER BY timestamp DESC").ExecuteReader()
+          |> readValues read
+      }

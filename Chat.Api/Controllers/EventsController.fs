@@ -10,7 +10,7 @@ type EventsController()=
 
   [<HttpGet>]
   member this.All()= async {
-    //let! res = Storage.Storage.Event.getAllEvents()
-    //return this.Ok(res)
-    return this.Ok()
+    Storage.Event.addEvent "call host://api/user/all"
+    let! res = Storage.Event.getAllEvents()
+    return this.Ok(res)
   }

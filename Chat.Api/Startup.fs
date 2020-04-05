@@ -10,9 +10,7 @@ open Microsoft.AspNetCore.Mvc
 open Microsoft.Extensions.Configuration
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Hosting
-open ClickHouse
-open ClickHouse.Ado
-open ClickHouse.Net
+open Chat.Db
 
 type Startup private () =
     new (configuration: IConfiguration) as this =
@@ -24,9 +22,8 @@ type Startup private () =
         // Add framework services.
         services.AddControllers() |> ignore
         services.AddDistributedMemoryCache()|> ignore
-        //services.AddClickHouse()
         
-        Chat.Storage.DbLayer.setDb "chatdb"
+        DbLayer.MongoDB.setDb "chatdb"
         //Chat.Storage.DbLayerEvents.setDb "chatdbEvets"
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

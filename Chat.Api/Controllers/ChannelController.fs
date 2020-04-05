@@ -5,7 +5,6 @@ open System
 open System.Net.WebSockets
 open System.Threading
 open Chat
-open Chat.Storage
 
 [<ApiController>]
 //[<Route("ws/")>]
