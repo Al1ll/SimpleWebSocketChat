@@ -11,6 +11,7 @@
     <Compile Include="Storage\Storage.fs" />
     <Compile Include="Models\ChatMessengeHandler.fs" />
     <Compile Include="Models\Global.fs" />
+    <Compile Include="Controllers\FSharpControllerBase.fs" />
     <Compile Include="Controllers\EventsController.fs" />
     <Compile Include="Controllers\ChannelController.fs" />
     <Compile Include="Controllers\UserController.fs" />

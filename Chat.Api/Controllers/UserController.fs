@@ -13,20 +13,20 @@ open Chat
 [<ApiController>]
 [<Route("api/[controller]/[action]")>]
 type UserController()=
-  inherit ControllerBase()
+  inherit FSharpControllerBase()
 
   [<HttpPost>]
   member this.Register nickname = async {
     if not<|(String.IsNullOrEmpty nickname) then
       Storage.Event.addEvent(sprintf "try register - nickname: %s" nickname)
       match! Storage.Users.isExists nickname with
-      | true -> return (this.BadRequest("this nickname already exists"):>IActionResult)
+      | true -> return this.BadRequest("this nickname already exists")
       | false -> 
          do! Storage.Users.addUser nickname
          Storage.Event.addEvent(sprintf "%s is registered" nickname)
-         return (this.Ok("Account created"):>IActionResult)
+         return this.Ok("Account created")
     else
-      return (this.BadRequest():>IActionResult)
+      return this.BadRequest()
   }
 
   [<HttpPost>]
@@ -55,11 +55,11 @@ type UserController()=
         //Session.Set Get не работают потому что я не могу извлечь данные в ChannelController т.к. там используется вебсокет
         let url = sprintf "ws://%s%s/%s/ws/%s" this.Request.Host.Host port nickname channelId
         Storage.Event.addEvent (sprintf "return sessionId: %s for %s in room %i" channelId nickname roomId)
-        return (this.Ok(url):> IActionResult)
-      | false -> return (this.NotFound("User is not registered"):> IActionResult)
+        return this.Ok(url)
+      | false -> return this.NotFound("User is not registered")
     else
       Storage.Event.addEvent(sprintf "some parameters are missing Nickname:%s roomId:%i" nickname roomId)
-      return (this.BadRequest("Please set nickname and roomId>=0"):> IActionResult)
+      return this.BadRequest("Please set nickname and roomId>=0")
   }
 
   [<HttpGet>]

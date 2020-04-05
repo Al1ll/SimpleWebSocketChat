@@ -11,7 +11,7 @@ open Chat
 type ChannelController()=
   inherit ControllerBase()
 
-  let recieve(ws:WebSocket) (f:WebSocketReceiveResult*byte array->Async<unit>)= async {
+  let recieve (ws:WebSocket) (f:WebSocketReceiveResult*byte array->Async<unit>) = async {
     let buffer = Array.zeroCreate (1024*4)
     while (ws.State = WebSocketState.Open) do
       let! result = ws.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None)|> Async.AwaitTask
@@ -21,7 +21,7 @@ type ChannelController()=
 
   [<HttpGet>]
   [<Route("~/{nickname}/ws/{channelId}")>]
-  member this.Connect(nickname:string,channelId:string)= async {
+  member this.Connect nickname channelId = async {
     if this.HttpContext.WebSockets.IsWebSocketRequest then
       if Global.channels.ContainsKey channelId then
         let roomId = Global.channels.Item channelId

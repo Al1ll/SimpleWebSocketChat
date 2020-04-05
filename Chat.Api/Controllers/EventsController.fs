@@ -9,7 +9,7 @@ type EventsController()=
   inherit ControllerBase()
 
   [<HttpGet>]
-  member this.All()= async {
+  member this.All() = async {
     Storage.Event.addEvent "call host://api/user/all"
     let! res = Storage.Event.getAllEvents()
     return this.Ok(res)
