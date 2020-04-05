@@ -11,11 +11,11 @@ open Chat
 type ChannelController()=
   inherit ControllerBase()
 
-  let recieve (ws:WebSocket) (f:WebSocketReceiveResult*byte array->Async<unit>) = async {
+  let recieve (ws:WebSocket) (f:WebSocketReceiveResult->byte array->Async<unit>) = async {
     let buffer = Array.zeroCreate (1024*4)
     while (ws.State = WebSocketState.Open) do
       let! result = ws.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None)|> Async.AwaitTask
-      do! f(result, buffer)
+      do! f result buffer
   }
 
 
@@ -29,10 +29,11 @@ type ChannelController()=
         let! ws = this.HttpContext.WebSockets.AcceptWebSocketAsync()|> Async.AwaitTask
         do! sh.OnConnected nickname ws
 
-        let f(result:WebSocketReceiveResult, buffer:byte array) = async {
+        let f (result:WebSocketReceiveResult) buffer = async {
           match result.MessageType with
-          | WebSocketMessageType.Text -> do! sh.Recieve nickname result buffer
-          | WebSocketMessageType.Close -> 
+          | WebSocketMessageType.Text when result.EndOfMessage -> do! sh.Recieve nickname result buffer
+          | WebSocketMessageType.Text//if EndOfMessage is False
+          | WebSocketMessageType.Close-> 
               do! sh.OnDisconnet nickname 
               if sh.IsEmpty() then
                 Global.rooms.TryRemove roomId |> ignore
