@@ -6,7 +6,7 @@ open Chat
 [<ApiController>]
 [<Route("api/[controller]/[action]")>]
 type EventsController()=
-  inherit ControllerBase()
+  inherit FSharpControllerBase()
 
   [<HttpGet>]
   member this.All() = async {

@@ -28,6 +28,7 @@ type ChannelController()=
         let sh = Global.rooms.Item roomId
         let! ws = this.HttpContext.WebSockets.AcceptWebSocketAsync()|> Async.AwaitTask
         do! sh.OnConnected nickname ws
+
         let f(result:WebSocketReceiveResult, buffer:byte array) = async {
           match result.MessageType with
           | WebSocketMessageType.Text -> do! sh.Recieve nickname result buffer
