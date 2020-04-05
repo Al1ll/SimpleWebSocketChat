@@ -103,8 +103,12 @@ module Storage =
           let text = read reader "message"
           {Timestamp=time; Event=text}
 
-        let! conn = DbLayer.ClickHouseDB.getConnectionAsync()
-        return
-          conn.CreateCommand("SELECT * FROM Events ORDER BY timestamp DESC").ExecuteReader()
-          |> readValues read
+        try
+          let! conn = DbLayer.ClickHouseDB.getConnectionAsync()
+          return
+            conn.CreateCommand("SELECT * FROM Events ORDER BY timestamp DESC").ExecuteReader()
+            |> readValues read
+        with ex ->
+          System.Console.WriteLine(sprintf "Error add event. Error:%A" ex)
+          return List.empty
       }
